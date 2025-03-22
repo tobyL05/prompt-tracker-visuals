@@ -1,41 +1,15 @@
 
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  Area, 
-  AreaChart, 
-  Bar, 
-  BarChart, 
-  CartesianGrid, 
-  Cell, 
-  Legend, 
-  Line, 
-  LineChart, 
-  Pie, 
-  PieChart, 
-  ResponsiveContainer, 
-  Tooltip, 
-  XAxis, 
-  YAxis 
-} from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { 
-  BarChart3,
-  LineChart as LineChartIcon, 
-  PieChart as PieChartIcon 
-} from "lucide-react";
+import { BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-
-interface PerformanceChartProps {
-  data: Array<{ date: string; usage: number; successRate: number }>;
-  title: string;
-  description?: string;
-  className?: string;
-}
-
-type ChartType = "line" | "area" | "bar" | "pie";
-
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#f59e0b', '#10b981'];
+import { ChartType, PerformanceChartProps } from "./charts/types";
+import { formatChartData } from "./charts/utils";
+import LineChartComponent from "./charts/LineChart";
+import AreaChartComponent from "./charts/AreaChart";
+import BarChartComponent from "./charts/BarChart";
+import PieChartComponent from "./charts/PieChart";
 
 const PerformanceChart = ({
   data,
@@ -52,18 +26,8 @@ const PerformanceChart = ({
     setLocalData(data);
   }, [data]);
 
-  // Process data for pie chart
-  const pieData = [
-    { name: "Successful", value: localData.reduce((acc, item) => acc + (item.usage * item.successRate), 0) },
-    { name: "Failed", value: localData.reduce((acc, item) => acc + (item.usage * (1 - item.successRate)), 0) }
-  ];
-
-  // Format the date for better display
-  const formattedData = localData.map((item) => ({
-    ...item,
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    successPercent: (item.successRate * 100).toFixed(1),
-  }));
+  // Format the data for display
+  const formattedData = formatChartData(localData);
 
   // Handle chart type change
   const handleChartTypeChange = (value: string) => {
@@ -95,228 +59,10 @@ const PerformanceChart = ({
       </CardHeader>
       <CardContent className="p-0 pt-4">
         <div className="h-[300px] w-full" ref={chartContainerRef}>
-          {chartType === "line" && (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={formattedData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  angle={-45}
-                  textAnchor="end"
-                  height={50}
-                />
-                <YAxis 
-                  yAxisId="left" 
-                  tick={{ fontSize: 12 }} 
-                  tickLine={false} 
-                  axisLine={false} 
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[0, 100]}
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}%`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    borderColor: "hsl(var(--border))",
-                    borderRadius: "var(--radius)",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                  }}
-                />
-                <Legend />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="usage"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: "hsl(var(--background))" }}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="successPercent"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  dot={{ strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: "hsl(var(--background))" }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-
-          {chartType === "area" && (
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={formattedData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
-              >
-                <defs>
-                  <linearGradient id="usageGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="successGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  angle={-45}
-                  textAnchor="end"
-                  height={50}
-                />
-                <YAxis 
-                  yAxisId="left" 
-                  tick={{ fontSize: 12 }} 
-                  tickLine={false} 
-                  axisLine={false} 
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[0, 100]}
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}%`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    borderColor: "hsl(var(--border))",
-                    borderRadius: "var(--radius)",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                  }}
-                />
-                <Legend />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="usage"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#usageGradient)"
-                  dot={{ strokeWidth: 2, r: 3, fill: "hsl(var(--background))" }}
-                  activeDot={{ r: 5, stroke: "hsl(var(--background))" }}
-                />
-                <Area
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="successPercent"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#successGradient)"
-                  dot={{ strokeWidth: 2, r: 3, fill: "hsl(var(--background))" }}
-                  activeDot={{ r: 5, stroke: "hsl(var(--background))" }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
-
-          {chartType === "bar" && (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={formattedData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  angle={-45}
-                  textAnchor="end"
-                  height={50}
-                />
-                <YAxis 
-                  yAxisId="left" 
-                  tick={{ fontSize: 12 }} 
-                  tickLine={false} 
-                  axisLine={false} 
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  domain={[0, 100]}
-                  tick={{ fontSize: 12 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}%`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    borderColor: "hsl(var(--border))",
-                    borderRadius: "var(--radius)",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                  }}
-                />
-                <Legend />
-                <Bar yAxisId="left" dataKey="usage" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-                <Bar yAxisId="right" dataKey="successPercent" fill="#10b981" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-
-          {chartType === "pie" && (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={80}
-                  outerRadius={120}
-                  fill="#8884d8"
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                  labelLine={false}
-                  animationBegin={0}
-                  animationDuration={800}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={index === 0 ? "#10b981" : "#f87171"} 
-                      stroke="hsl(var(--background))"
-                      strokeWidth={2}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    borderColor: "hsl(var(--border))",
-                    borderRadius: "var(--radius)",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-                  }}
-                  formatter={(value: number) => [`${value.toFixed(0)} prompts`, undefined]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+          {chartType === "line" && <LineChartComponent data={formattedData} />}
+          {chartType === "area" && <AreaChartComponent data={formattedData} />}
+          {chartType === "bar" && <BarChartComponent data={formattedData} />}
+          {chartType === "pie" && <PieChartComponent data={formattedData} />}
         </div>
       </CardContent>
     </Card>
