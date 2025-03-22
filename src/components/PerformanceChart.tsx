@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Area, 
   AreaChart, 
@@ -44,19 +44,33 @@ const PerformanceChart = ({
   className,
 }: PerformanceChartProps) => {
   const [chartType, setChartType] = useState<ChartType>("area");
+  const [localData, setLocalData] = useState(data);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Update local data when prop data changes
+  useEffect(() => {
+    setLocalData(data);
+  }, [data]);
 
   // Process data for pie chart
   const pieData = [
-    { name: "Successful", value: data.reduce((acc, item) => acc + (item.usage * item.successRate), 0) },
-    { name: "Failed", value: data.reduce((acc, item) => acc + (item.usage * (1 - item.successRate)), 0) }
+    { name: "Successful", value: localData.reduce((acc, item) => acc + (item.usage * item.successRate), 0) },
+    { name: "Failed", value: localData.reduce((acc, item) => acc + (item.usage * (1 - item.successRate)), 0) }
   ];
 
   // Format the date for better display
-  const formattedData = data.map((item) => ({
+  const formattedData = localData.map((item) => ({
     ...item,
     date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     successPercent: (item.successRate * 100).toFixed(1),
   }));
+
+  // Handle chart type change
+  const handleChartTypeChange = (value: string) => {
+    if (value) {
+      setChartType(value as ChartType);
+    }
+  };
 
   return (
     <Card className={cn("h-full w-full overflow-hidden", className)}>
@@ -67,7 +81,7 @@ const PerformanceChart = ({
             <CardDescription>{description}</CardDescription>
           )}
         </div>
-        <ToggleGroup type="single" value={chartType} onValueChange={(value) => value && setChartType(value as ChartType)}>
+        <ToggleGroup type="single" value={chartType} onValueChange={handleChartTypeChange}>
           <ToggleGroupItem value="area" size="sm" className="h-8 w-8 p-0">
             <LineChartIcon className="h-4 w-4" />
           </ToggleGroupItem>
@@ -80,7 +94,7 @@ const PerformanceChart = ({
         </ToggleGroup>
       </CardHeader>
       <CardContent className="p-0 pt-4">
-        <div className="h-[300px] w-full">
+        <div className="h-[300px] w-full" ref={chartContainerRef}>
           {chartType === "line" && (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -97,7 +111,12 @@ const PerformanceChart = ({
                   textAnchor="end"
                   height={50}
                 />
-                <YAxis yAxisId="left" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                <YAxis 
+                  yAxisId="left" 
+                  tick={{ fontSize: 12 }} 
+                  tickLine={false} 
+                  axisLine={false} 
+                />
                 <YAxis
                   yAxisId="right"
                   orientation="right"
@@ -164,7 +183,12 @@ const PerformanceChart = ({
                   textAnchor="end"
                   height={50}
                 />
-                <YAxis yAxisId="left" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                <YAxis 
+                  yAxisId="left" 
+                  tick={{ fontSize: 12 }} 
+                  tickLine={false} 
+                  axisLine={false} 
+                />
                 <YAxis
                   yAxisId="right"
                   orientation="right"
@@ -225,7 +249,12 @@ const PerformanceChart = ({
                   textAnchor="end"
                   height={50}
                 />
-                <YAxis yAxisId="left" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                <YAxis 
+                  yAxisId="left" 
+                  tick={{ fontSize: 12 }} 
+                  tickLine={false} 
+                  axisLine={false} 
+                />
                 <YAxis
                   yAxisId="right"
                   orientation="right"
